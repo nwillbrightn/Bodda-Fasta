@@ -1,0 +1,53 @@
+name: CD Pipeline
+
+on:
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    types: [completed]
+
+jobs:
+  deploy-staging:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build and tag staging images
+        run: |
+          docker build -t bodaboda-backend:staging ./backend
+          docker build -t bodaboda-frontend:staging ./frontend
+
+      - name: Run staging containers
+        run: |
+          docker run -d --name bodaboda-backend-staging -p 5001:5000 bodaboda-backend:staging
+          docker run -d --name bodaboda-frontend-staging -p 3001:3000 bodaboda-frontend:staging
+
+      - name: Verify staging is running
+        run: docker ps
+
+  approve-production:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Awaiting approval
+        run: echo "Production deployment approved"
+
+  deploy-production:
+    needs: approve-production
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build and tag production images
+        run: |
+          docker build -t bodaboda-backend:v1 ./backend
+          docker build -t bodaboda-frontend:v1 ./frontend
+
+      - name: Run production containers
+        run: |
+          docker run -d --name bodaboda-backend-prod -p 5000:5000 bodaboda-backend:v1
+          docker run -d --name bodaboda-frontend-prod -p 3000:3000 bodaboda-frontend:v1
+
+      - name: Verify production is running
+        run: docker ps
