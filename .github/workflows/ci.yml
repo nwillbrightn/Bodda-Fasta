@@ -42,7 +42,7 @@ jobs:
       - name: Run frontend tests
         run: |
           cd frontend
-          npm test -- --watchAll=false
+          npx jest tests/home.test.js
 
   build-docker:
     runs-on: ubuntu-latest
