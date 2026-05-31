@@ -1,0 +1,10 @@
+1780236670: mosquitto version 2.1.2 starting
+1780236670: Config loaded from /mosquitto/config/mosquitto.conf.
+1780236670: Bridge support available.
+1780236670: Persistence support available.
+1780236670: TLS support available.
+1780236670: TLS-PSK support available.
+1780236670: Websockets support available.
+1780236670: Opening ipv4 listen socket on port 1883.
+1780236670: Opening ipv6 listen socket on port 1883.
+1780236670: mosquitto version 2.1.2 running

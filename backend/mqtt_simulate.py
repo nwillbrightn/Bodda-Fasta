@@ -1,7 +1,7 @@
 import paho.mqtt.client as mqtt
 import json
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 MQTT_BROKER = "localhost"
 MQTT_PORT = 1883
@@ -33,15 +33,15 @@ time.sleep(1)
 publisher = mqtt.Client(client_id="driver_publisher")
 publisher.connect(MQTT_BROKER, MQTT_PORT, 60)
 
-# Simulate driver moving through Dar es Salaam
+# Simulate driver moving through Dodoma, Tanzania
 locations = [
-    {"latitude": -6.7924, "longitude": 39.2083, "area": "Nyerere Square"},
-    {"latitude": -6.8000, "longitude": 39.2150, "area": "Kariakoo"},
-    {"latitude": -6.8100, "longitude": 39.2200, "area": "Buguruni"},
-    {"latitude": -6.8200, "longitude": 39.2300, "area": "Tabata"},
+    {"latitude": -6.1722, "longitude": 35.7395, "area": "Makulu"},
+    {"latitude": -6.1850, "longitude": 35.7420, "area": "Sabasaba"},
+    {"latitude": -6.1650, "longitude": 35.7500, "area": "Chamwino"},
+    {"latitude": -6.2000, "longitude": 35.7600, "area": "Ihumwa"},
 ]
 
-print("\n--- Bodda-Fasta Driver Location Simulation ---\n")
+print("\n--- Bodda-Fasta Driver Location Simulation (Dodoma) ---\n")
 
 for loc in locations:
     payload = json.dumps({
@@ -49,7 +49,7 @@ for loc in locations:
         "latitude": loc["latitude"],
         "longitude": loc["longitude"],
         "area": loc["area"],
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     })
     publisher.publish(TOPIC, payload)
     print(f"[DRIVER] Published location: {loc['area']}")
