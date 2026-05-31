@@ -8,6 +8,8 @@ services:
     ports:
       - "5000:5000"
     container_name: bodaboda-backend
+    depends_on:
+      - mqtt
 
   frontend:
     build:
@@ -18,3 +20,14 @@ services:
     container_name: bodaboda-frontend
     depends_on:
       - backend
+
+  mqtt:
+    image: eclipse-mosquitto:latest
+    container_name: bodaboda-mqtt
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log

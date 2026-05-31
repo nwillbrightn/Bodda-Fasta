@@ -5,6 +5,16 @@ on: [push]
 jobs:
   test-backend:
     runs-on: ubuntu-latest
+    services:
+      mqtt:
+        image: eclipse-mosquitto:latest
+        ports:
+          - 1883:1883
+        options: >-
+          --health-cmd "mosquitto_pub -h localhost -t test -m ping -q 0 2>/dev/null || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v3
 
@@ -55,3 +65,11 @@ jobs:
 
       - name: Build frontend Docker image
         run: docker build -t bodaboda-frontend:latest ./frontend
+
+      - name: Start MQTT broker
+        run: |
+          docker run -d --name bodaboda-mqtt -p 1883:1883 eclipse-mosquitto:latest
+          sleep 3
+
+      - name: Verify MQTT broker is running
+        run: docker ps | grep bodaboda-mqtt

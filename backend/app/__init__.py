@@ -31,7 +31,7 @@ def create_app():
 
     migrate.init_app(app, db)
     jwt.init_app(app)
-    socketio.init_app(app, cors_allowed_origins="*", async_mode="threading")  # 👈 threading mode
+    socketio.init_app(app, cors_allowed_origins="*", async_mode="threading")
 
     from app.routes.user_routes import user_bp
     from app.routes.auth_routes import auth_bp
@@ -45,5 +45,9 @@ def create_app():
 
     from app.sockets import rider_sockets
     rider_sockets.register(socketio)
+
+    # Start MQTT client
+    from app.mqtt_client import start_mqtt
+    start_mqtt()
 
     return app
