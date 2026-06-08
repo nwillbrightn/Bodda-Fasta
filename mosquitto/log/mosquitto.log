@@ -8,3 +8,20 @@
 1780236670: Opening ipv4 listen socket on port 1883.
 1780236670: Opening ipv6 listen socket on port 1883.
 1780236670: mosquitto version 2.1.2 running
+1780236770: New connection from 172.18.0.1:48902 on port 1883.
+1780236770: New client connected from 172.18.0.1:48902 as passenger_subscriber (p4, c1, k60).
+1780236771: New connection from 172.18.0.1:48918 on port 1883.
+1780236771: New client connected from 172.18.0.1:48918 as driver_publisher (p4, c1, k60).
+1780236779: Client driver_publisher [172.18.0.1:48918] disconnected: connection closed by client.
+1780236779: Client passenger_subscriber [172.18.0.1:48902] disconnected: connection closed by client.
+1780237075: New connection from 172.18.0.1:54560 on port 1883.
+1780237075: New client connected from 172.18.0.1:54560 as passenger_subscriber (p4, c1, k60).
+1780237076: New connection from 172.18.0.1:54570 on port 1883.
+1780237076: New client connected from 172.18.0.1:54570 as driver_publisher (p4, c1, k60).
+1780237084: Client passenger_subscriber [172.18.0.1:54560] disconnected: connection closed by client.
+1780237084: Client driver_publisher [172.18.0.1:54570] disconnected: connection closed by client.
+1780238472: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1780240272: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1780242073: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1780243873: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1780245674: Saving in-memory database to /mosquitto/data//mosquitto.db.
