@@ -1,8 +1,13 @@
+# CI Pipeline — Continuous Integration
+# Triggered automatically on every code push to the repository
+
 name: CI Pipeline
 
-on: [push]
+on: [push]  # Runs on every push to any branch
 
 jobs:
+
+  # ─── JOB 1: BACKEND TESTS ───
   test-backend:
     runs-on: ubuntu-latest
     services:
@@ -27,13 +32,23 @@ jobs:
         run: |
           cd backend
           pip install -r requirements.txt
-          pip install pytest
+          pip install pytest pytest-cov
 
-      - name: Run backend tests
+      # IMPROVEMENT: Run tests WITH coverage reporting
+      # Shows what percentage of code is actually tested
+      - name: Run backend tests with coverage
         run: |
           cd backend
-          pytest tests/
+          pytest tests/ --cov=. --cov-report=term-missing --cov-report=html
 
+      # Upload coverage report as a downloadable artifact
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-report
+          path: backend/htmlcov/
+
+  # ─── JOB 2: FRONTEND TESTS ───
   test-frontend:
     runs-on: ubuntu-latest
     steps:
@@ -54,6 +69,7 @@ jobs:
           cd frontend
           npx jest tests/home.test.js
 
+  # ─── JOB 3: BUILD & PUSH TO DOCKER HUB ───
   build-and-push:
     runs-on: ubuntu-latest
     needs: [test-backend, test-frontend]
@@ -83,3 +99,23 @@ jobs:
           tags: |
             novertto/bodaboda-frontend:latest
             novertto/bodaboda-frontend:v1.0
+
+  # ─── JOB 4: NOTIFICATION (IMPROVEMENT) ───
+  # Sends an email after every pipeline run, success or failure
+  # Closes the root cause found in Task 3: no alert when pipeline finishes/fails
+  notify:
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    if: always()  # Run even if previous jobs failed
+    steps:
+      - name: Send email notification
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "Bodda-Fasta CI Pipeline: ${{ needs.build-and-push.result }}"
+          to: ${{ secrets.EMAIL_USERNAME }}
+          from: Bodda-Fasta CI
+          body: "Pipeline run finished with status ${{ needs.build-and-push.result }}. View details: https://github.com/nwillbrightn/Bodda-Fasta/actions"

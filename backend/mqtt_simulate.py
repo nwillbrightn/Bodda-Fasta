@@ -17,7 +17,10 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, msg):
     payload = json.loads(msg.payload.decode())
-    print(f"[PASSENGER] Received location update: {payload}")
+    sent_time = datetime.fromisoformat(payload["timestamp"])
+    received_time = datetime.now(timezone.utc)
+    latency_ms = (received_time - sent_time).total_seconds() * 1000
+    print(f"[PASSENGER] Received location update: {payload} | Latency: {latency_ms:.2f} ms")
 
 # Set up subscriber client
 subscriber = mqtt.Client(client_id="passenger_subscriber")

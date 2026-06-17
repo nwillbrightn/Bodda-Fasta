@@ -1,65 +1,89 @@
+# CD Pipeline — Continuous Deployment
+# Triggered automatically after the CI Pipeline completes successfully
+
 name: CD Pipeline
 
 on:
   workflow_run:
-    workflows: ["CI Pipeline"]
+    workflows: ["CI Pipeline"]  # Listens for CI Pipeline to finish
     types: [completed]
 
 jobs:
+
+  # ─── JOB 1: STAGING DEPLOYMENT ───
   deploy-staging:
+    # Only run if CI Pipeline passed — don't deploy broken code
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3  # Check out the repository code
 
+      # Authenticate with Docker Hub using stored GitHub Secrets
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      # Pull the latest images from Docker Hub instead of building locally
+      # This ensures staging uses the same image that was built and tested in CI
       - name: Pull images from Docker Hub
         run: |
           docker pull novertto/bodaboda-backend:latest
           docker pull novertto/bodaboda-frontend:latest
 
+      # Stop and remove any existing staging containers to avoid conflicts
+      # Then start fresh staging containers on different ports (5001/3001)
+      # so they don't conflict with production (5000/3000)
       - name: Run staging containers
         run: |
-          docker stop bodaboda-backend-staging || true
+          docker stop bodaboda-backend-staging || true   # Stop if running, ignore error if not
           docker stop bodaboda-frontend-staging || true
-          docker rm bodaboda-backend-staging || true
+          docker rm bodaboda-backend-staging || true     # Remove old container if exists
           docker rm bodaboda-frontend-staging || true
           docker run -d --name bodaboda-backend-staging -p 5001:5000 novertto/bodaboda-backend:latest
           docker run -d --name bodaboda-frontend-staging -p 3001:3000 novertto/bodaboda-frontend:latest
 
+      # Confirm staging containers are actually running
       - name: Verify staging is running
         run: docker ps
 
+  # ─── JOB 2: MANUAL APPROVAL GATE ───
   approve-production:
-    needs: deploy-staging
+    needs: deploy-staging  # Only runs after staging deployment succeeds
     runs-on: ubuntu-latest
-    environment: production
+    environment: production  # Triggers GitHub Environment protection rules
+    # Pipeline pauses here and waits for a reviewer to approve
+    # This simulates a Release Manager decision before going live
     steps:
       - name: Awaiting approval
         run: echo "Production deployment approved"
 
+  # ─── JOB 3: PRODUCTION DEPLOYMENT ───
   deploy-production:
-    needs: approve-production
+    needs: approve-production  # Only runs after manual approval is granted
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
+      # Authenticate with Docker Hub again for production pull
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      # Pull versioned images (v1.0) for production
+      # Using a fixed version tag instead of :latest ensures
+      # production always runs a known stable release
       - name: Pull images from Docker Hub
         run: |
           docker pull novertto/bodaboda-backend:v1.0
           docker pull novertto/bodaboda-frontend:v1.0
 
+      # Stop and remove old production containers, then start fresh ones
+      # Production runs on standard ports (5000/3000)
+      # Also starts the MQTT broker for real-time communication
       - name: Run production containers
         run: |
           docker stop bodaboda-backend-prod || true
@@ -68,10 +92,13 @@ jobs:
           docker rm bodaboda-frontend-prod || true
           docker run -d --name bodaboda-backend-prod -p 5000:5000 novertto/bodaboda-backend:v1.0
           docker run -d --name bodaboda-frontend-prod -p 3000:3000 novertto/bodaboda-frontend:v1.0
-          docker run -d --name bodaboda-mqtt -p 1883:1883 eclipse-mosquitto:latest || true
+          docker run -d --name bodaboda-mqtt -p 1883:1883 eclipse-mosquitto:latest || true  # Start MQTT broker, ignore if already running
 
+      # Confirm all production containers are running
       - name: Verify production is running
         run: docker ps
 
+      # Specifically verify MQTT broker is running for real-time features
+      # If already running from a previous deployment, print a message instead of failing
       - name: Verify MQTT broker
         run: docker ps | grep bodaboda-mqtt || echo "MQTT broker already running"
